@@ -1,1 +1,1 @@
-nnoremap ,task :-1read @prefix@/share/@PACKAGE@/templates/task.md<CR>A
+nnoremap ,task :-1read @datadir@/templates/task.md<CR>A
