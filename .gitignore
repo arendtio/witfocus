@@ -1,0 +1,12 @@
+Makefile.in
+configure
+aclocal.m4
+autom4te.cache/
+install-sh
+missing
+Makefile
+config.log
+config.status
+src/Makefile
+src/vimrc
+/taskfocus

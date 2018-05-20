@@ -1,0 +1,90 @@
+#!/usr/bin/env bash
+#--------------------------------------------
+# Default Bash Script Header
+set -eu
+trap stacktrace EXIT
+function stacktrace {
+	if [ $? != 0 ]; then
+		echo -e "\nThe command '$BASH_COMMAND' triggerd a stacktrace:"
+		for i in $(seq 1 $((${#FUNCNAME[@]} - 2))); do j=$(($i+1)); echo -e "\t${BASH_SOURCE[$i]}: ${FUNCNAME[$i]}() called in ${BASH_SOURCE[$j]}:${BASH_LINENO[$i]}"; done
+	fi
+}
+#--------------------------------------------
+
+##  Check for Dependencies
+if ! which sha1sum >/dev/null 2>&1 ; then
+	echo -e "Please install sha1sum (coreutils)\n"
+	trap '' EXIT
+	exit 1
+fi
+
+# build time variables
+prefix="@prefix@"
+pkgdatadir="@datarootdir@/@PACKAGE@"
+config="@PACKAGE@.conf"
+sysconfig="@sysconfdir@/$config"
+userconfig=${XDG_CONFIG_HOME:=~/.config}/"$config"
+XDG_DATA_HOME=${XDG_DATA_HOME:=~/.local/share}
+. "$sysconfig"
+
+if ! [ -f "$userconfig" ]; then
+	# setup
+	echo "It looks like you are running taskfocus for the first time. Starting setup:"
+	read -e -p "Please enter where to store your task files: " -i "$XDG_DATA_HOME/taskfocus" directory;
+	echo "directory=\"$directory\"" > "$userconfig"
+	echo "vimrc snippet:"
+	cat "$pkgdatadir/templates/vimrc"
+	echo "It is recommended to add the above snippet to your vimrc."
+	read -p "Should we append it for you now? (y/n)" -n 1 -r
+	echo # move to a new line
+	if [[ $REPLY = "y" ]]; then
+		echo "Adding snippet to ~/.vimrc"
+		cat "$pkgdatadir/templates/vimrc" >> ~/.vimrc
+	fi
+fi
+
+. "$userconfig" # overwrite values from the sysconfig
+mkdir -p "$directory"
+
+# other variables
+filename="$(date +%Y%m%d).md"
+template="$pkgdatadir/templates/task.md"
+
+if [ $# -gt 0 ]; then
+	if [ "$1" == "open" ]; then
+		# sort only by the first column (seperated by space)
+		grep -ri "\- \[ \]" "$directory" | sed -e 's;^[^:]*/;;' -e 's/.md:-/:/' | sort -s -k 1,1
+		exit 0
+	elif [ "$1" == "backlog" ]; then
+		filename="backlog.md"
+	elif [ -f "$directory/$1.md" ]; then
+		filename="$1.md"
+	elif ! [ -f "$directory/$1.md" ] && [ "$2" = "-f" ]; then
+		filename="$1.md"
+	else
+		echo -e "Task File '$1' does not exist.\n"
+		echo "Usage: $0 [backlog]"
+		exit 0
+	fi
+fi
+
+fullPath="$directory/$filename"
+
+defaultHash="---"
+if ! [ -f "$fullPath" ]; then
+	touch "$fullPath"
+	echo "# Tasks" >> "$fullPath"
+	cat "$template" >> "$fullPath"
+	echo "type ',task' to add more tasks" >> "$fullPath"
+	defaultHash="$(sha1sum "$fullPath" | cut -d" " -f1)"
+fi
+
+vim "$fullPath"
+
+hashSum="$(sha1sum "$fullPath" | cut -d" " -f1)"
+
+if [ -f "$fullPath" ] && [ "$hashSum" == "$defaultHash" ]; then
+	echo "Removing unmodified task file again"
+	rm "$fullPath"
+fi
+
