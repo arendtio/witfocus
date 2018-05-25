@@ -47,7 +47,13 @@ fi
 mkdir -p "$directory"
 
 # other variables
-filename="$(date +%Y%m%d).md"
+timestamp="$(date +%s)"
+cycle="$((60*60*24))"
+format="%Y%m%d"
+last="$(date +$format -d @$(($timestamp + ($cycle*-1)))).md"
+current="$(date +$format -d @$(($timestamp + ($cycle*0)))).md"
+next="$(date +$format -d @$(($timestamp + ($cycle*1)))).md"
+filename="$current"
 template="$pkgdatadir/templates/task.md"
 
 if [ $# -gt 0 ]; then
@@ -57,34 +63,78 @@ if [ $# -gt 0 ]; then
 		exit 0
 	elif [ "$1" == "backlog" ]; then
 		filename="backlog.md"
+	elif [ "$1" == "last" ]; then
+		filename="$last"
+	elif [ "$1" == "current" ]; then
+		filename="$current"
+	elif [ "$1" == "next" ]; then
+		filename="$next"
 	elif [ -f "$directory/$1.md" ]; then
 		filename="$1.md"
-	elif ! [ -f "$directory/$1.md" ] && [ "$2" = "-f" ]; then
+	elif ! [ -f "$directory/$1.md" ] && [ "${2:-}" == "-f" ]; then
 		filename="$1.md"
 	else
 		echo -e "Task File '$1' does not exist.\n"
-		echo "Usage: $0 [backlog]"
+		echo -e "Usage: $0 [operation] [options]"
+		echo -e "Operations:"
+		echo -e "\tbacklog\topens the backlog"
+		echo -e "\tlast\topens the file for the last cycle (e.g. yesterday)"
+		echo -e "\tcurrent\topens the file for the current cycle (e.g. day)"
+		echo -e "\tnext\topens the file for the last cycle (e.g. tomorrow)"
+		echo -e "\t{date}\topens the file for a specific date (e.g. use '20180525' for the 25th May 2018)"
+		echo -e ""
+		echo -e "'current' is the default operation"
+		echo -e ""
+		echo -e "Options:"
+		echo -e "\t-f\t to create non-existing files which are not part of the predefined operations (e.g. for future dates)"
+		echo -e ""
+		echo -e "For all operations which are not the 'current' one, the 'current' operation will be displayed next to it."
 		exit 0
 	fi
 fi
 
-fullPath="$directory/$filename"
+function fileHash {
+	filePath="$1"
+	sha1sum "$filePath" | cut -d" " -f1
+}
 
-defaultHash="---"
-if ! [ -f "$fullPath" ]; then
-	touch "$fullPath"
-	echo "# Tasks" >> "$fullPath"
-	cat "$template" >> "$fullPath"
-	echo "type ',task' to add more tasks" >> "$fullPath"
-	defaultHash="$(sha1sum "$fullPath" | cut -d" " -f1)"
+# create file from template if it doesn't exist
+# echos nothing if the file exists (important for removeUnused)
+function createFileFromTemplate {
+	filePath="$1"
+	# dont overwrite existing files
+	if ! [ -f "$filePath" ]; then
+		touch "$filePath"
+		echo "# Tasks" >> "$filePath"
+		cat "$template" >> "$filePath"
+		echo "type ',task' to add more tasks" >> "$filePath"
+		fileHash "$filePath"
+	fi
+}
+
+function removeUnused {
+	filePath="$1"
+	templateHash="$2"
+	hashSum="$(fileHash "$filePath")"
+	# if the file didn't exist and it wasn't modified, we remove it
+	if [ -f "$filePath" ] && [ "$hashSum" != "" ] && [ "$hashSum" == "$templateHash" ]; then
+		echo "Removing unmodified task file $filePath"
+		rm "$filePath"
+	fi
+}
+
+primary="$directory/$filename"
+secondary="$directory/$current"
+
+primaryTemplateHash="$(createFileFromTemplate "$primary")"
+secondaryTemplateHash="$(createFileFromTemplate "$secondary")"
+
+if [ "$primary" == "$secondary" ]; then
+	vim "$primary"
+else
+	vim -O "$primary" "$secondary"
 fi
 
-vim "$fullPath"
-
-hashSum="$(sha1sum "$fullPath" | cut -d" " -f1)"
-
-if [ -f "$fullPath" ] && [ "$hashSum" == "$defaultHash" ]; then
-	echo "Removing unmodified task file again"
-	rm "$fullPath"
-fi
+removeUnused "$primary" "$primaryTemplateHash"
+removeUnused "$secondary" "$secondaryTemplateHash"
 
