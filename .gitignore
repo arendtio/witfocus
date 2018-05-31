@@ -10,3 +10,4 @@ config.status
 src/Makefile
 src/vimrc
 /taskfocus
+/dev-build/
