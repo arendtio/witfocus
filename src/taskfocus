@@ -175,5 +175,7 @@ else
 fi
 
 removeUnused "$primary" "$primaryTemplateHash"
-removeUnused "$secondary" "$secondaryTemplateHash"
+if [ "$primary" != "$secondary" ]; then
+	removeUnused "$secondary" "$secondaryTemplateHash"
+fi
 
