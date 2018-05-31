@@ -88,7 +88,7 @@ mkdir -p "$directory"
 # other variables
 timestamp="$(date +%s)"
 cycle="$((60*60*24))"
-format="%Y%m%d"
+format="%Y-%m-%d"
 last="$(date +$format -d @$(($timestamp + ($cycle*-1)))).md"
 current="$(date +$format -d @$(($timestamp + ($cycle*0)))).md"
 next="$(date +$format -d @$(($timestamp + ($cycle*1)))).md"
