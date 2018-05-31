@@ -25,13 +25,50 @@ config="@PACKAGE@.conf"
 sysconfig="@sysconfdir@/$config"
 userconfig=${XDG_CONFIG_HOME:=~/.config}/"$config"
 XDG_DATA_HOME=${XDG_DATA_HOME:=~/.local/share}
-. "$sysconfig"
 
+function colonValue {
+	local field=$1
+	local file=$2
+
+	if ! [ -f "$file" ]; then
+		return
+	fi
+
+	grep -e "^$field:" "$file" \
+		| cut -d':' -f2- \
+		| sed 's/\(^[[:space:]]\+\|[[:space:]]\+$\)//g'
+}
+
+function loadConfigValue {
+	local field="$1"
+	local defaultValue="$2"
+	local systemConfig="$3"
+	local userConfig="$4"
+
+	# read from userconfig
+	local value="$(colonValue "$field" "$userConfig")"
+	if [ "$value" == "" ]; then
+		value="$(colonValue "$field" "$systemConfig")"
+	fi
+	if [ "$value" == "" ]; then
+		value="$defaultValue"
+	fi
+	echo "$value"
+}
+
+function loadConfigValueEvaluated {
+	value="$(loadConfigValue "$@")"
+	eval "echo $value" # to evaluate variables like: $XDG_DATA_HOME
+}
+
+# setup
 if ! [ -f "$userconfig" ]; then
-	# setup
+	# load system defaults
+	directory="$(loadConfigValueEvaluated "directory" "$XDG_DATA_HOME/taskfocus" "$sysconfig" "$userconfig")"
+
 	echo "It looks like you are running taskfocus for the first time. Starting setup:"
-	read -e -p "Please enter where to store your task files: " -i "$XDG_DATA_HOME/taskfocus" directory;
-	echo "directory=\"$directory\"" > "$userconfig"
+	read -e -p "Please enter where to store your task files: " -i "$directory" directory;
+	echo "directory: $directory" > "$userconfig"
 	echo "vimrc snippet:"
 	cat "$pkgdatadir/templates/vimrc"
 	echo "It is recommended to add the above snippet to your vimrc."
@@ -43,7 +80,9 @@ if ! [ -f "$userconfig" ]; then
 	fi
 fi
 
-. "$userconfig" # overwrite values from the sysconfig
+# load config values
+directory="$(loadConfigValueEvaluated "directory" "$XDG_DATA_HOME/taskfocus" "$sysconfig" "$userconfig")"
+
 mkdir -p "$directory"
 
 # other variables
@@ -94,14 +133,14 @@ if [ $# -gt 0 ]; then
 fi
 
 function fileHash {
-	filePath="$1"
+	local filePath="$1"
 	sha1sum "$filePath" | cut -d" " -f1
 }
 
 # create file from template if it doesn't exist
 # echos nothing if the file exists (important for removeUnused)
 function createFileFromTemplate {
-	filePath="$1"
+	local filePath="$1"
 	# dont overwrite existing files
 	if ! [ -f "$filePath" ]; then
 		touch "$filePath"
@@ -113,9 +152,9 @@ function createFileFromTemplate {
 }
 
 function removeUnused {
-	filePath="$1"
-	templateHash="$2"
-	hashSum="$(fileHash "$filePath")"
+	local filePath="$1"
+	local templateHash="$2"
+	local hashSum="$(fileHash "$filePath")"
 	# if the file didn't exist and it wasn't modified, we remove it
 	if [ -f "$filePath" ] && [ "$hashSum" != "" ] && [ "$hashSum" == "$templateHash" ]; then
 		echo "Removing unmodified task file $filePath"
