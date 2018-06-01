@@ -30,78 +30,48 @@ XDG_DATA_HOME=${XDG_DATA_HOME:=~/.local/share}
 
 # setup
 if ! [ -f "$userconfig" ]; then
-	# load system defaults
-	directory="$(loadConfigValueEvaluated "directory" "$XDG_DATA_HOME/taskfocus" "$sysconfig" "$userconfig")"
-
-	echo "It looks like you are running taskfocus for the first time. Starting setup:"
-	read -e -p "Please enter where to store your task files: " -i "$directory" directory;
-	echo "directory: $directory" > "$userconfig"
-	echo "vimrc snippet:"
-	cat "$pkgdatadir/templates/vimrc"
-	echo "It is recommended to add the above snippet to your vimrc."
-	read -p "Should we append it for you now? (y/n)" -n 1 -r
-	echo # move to a new line
-	if [[ $REPLY = "y" ]]; then
-		echo "Adding snippet to ~/.vimrc"
-		cat "$pkgdatadir/templates/vimrc" >> ~/.vimrc
-	fi
+	setup "$pkgdatadir" "$sysconfig" "$userconfig"
 fi
 
 # load config values
 directory="$(loadConfigValueEvaluated "directory" "$XDG_DATA_HOME/taskfocus" "$sysconfig" "$userconfig")"
-format="$(loadConfigValueEvaluated "name-format" "%Y-%m-%d" "$sysconfig" "$userconfig")"
-cycle="$(loadConfigValueEvaluated "cycle-duration" "$((60*60*24))" "$sysconfig" "$userconfig")"
+format="$(loadConfigValue "name-format" "%Y-%m-%d" "$sysconfig" "$userconfig")"
+cycle="$(loadConfigValue "cycle-duration" "$((60*60*24))" "$sysconfig" "$userconfig")"
+secondaryName="$(loadConfigValue "default-secondary-file" "current" "$sysconfig" "$userconfig")"
+action="$(loadConfigValue "default-action" "current" "$sysconfig" "$userconfig")"
 
-mkdir -p "$directory"
-
-# other variables
-now=$(date +%s)
-timestamp="$(($now / $cycle * $cycle))"
-last="$(date +$format -d @$(($timestamp + ($cycle*-1)))).md"
-current="$(date +$format -d @$(($timestamp + ($cycle*0)))).md"
-next="$(date +$format -d @$(($timestamp + ($cycle*1)))).md"
-filename="$current"
-template="$pkgdatadir/templates/task.md"
-
+# CLI paramters
 if [ $# -gt 0 ]; then
-	if [ "$1" == "open" ]; then
-		# sort only by the first column (seperated by space)
-		grep -ri "\- \[ \]" "$directory" | sed -e 's;^[^:]*/;;' -e 's/.md:-/:/' | sort -s -k 1,1
-		exit 0
-	elif [ "$1" == "backlog" ]; then
-		filename="backlog.md"
-	elif [ "$1" == "last" ]; then
-		filename="$last"
-	elif [ "$1" == "current" ]; then
-		filename="$current"
-	elif [ "$1" == "next" ]; then
-		filename="$next"
-	elif [ -f "$directory/$1.md" ]; then
-		filename="$1.md"
-	elif ! [ -f "$directory/$1.md" ] && [ "${2:-}" == "-f" ]; then
-		filename="$1.md"
-	else
-		echo -e "Task File '$1' does not exist.\n"
-		echo -e "Usage: $0 [operation] [options]"
-		echo -e "Operations:"
-		echo -e "\tbacklog\topens the backlog"
-		echo -e "\tlast\topens the file for the last cycle (e.g. yesterday)"
-		echo -e "\tcurrent\topens the file for the current cycle (e.g. day)"
-		echo -e "\tnext\topens the file for the last cycle (e.g. tomorrow)"
-		echo -e "\t{date}\topens the file for a specific date (e.g. use '20180525' for the 25th May 2018)"
-		echo -e ""
-		echo -e "'current' is the default operation"
-		echo -e ""
-		echo -e "Options:"
-		echo -e "\t-f\t to create non-existing files which are not part of the predefined operations (e.g. for future dates)"
-		echo -e ""
-		echo -e "For all operations which are not the 'current' one, the 'current' operation will be displayed next to it."
-		exit 0
-	fi
+	action="$1"
+fi
+forced="false"
+if [ $# -gt 1 ] && [ "${2:-}" == "-f" ]; then
+	forced="true"
 fi
 
-primary="$directory/$filename"
-secondary="$directory/$current"
+# other variables
+template="$pkgdatadir/templates/task.md"
+now=$(date +%s)
+primary="$directory/$(nameToFilename "$action" "$now" "$forced")"
+secondary="$directory/$(nameToFilename "$secondaryName" "$now" "$forced")"
+
+if [ "$action" == "open" ]; then
+	# sort only by the first column (seperated by space)
+	if [ -d "$directory" ]; then
+		grep -ri "\- \[ \]" "$directory" | sed -e 's;^[^:]*/;;' -e 's/.md:-/:/' | sort -s -k 1,1
+	fi
+	exit 0
+elif ! [ -f "$primary" ] \
+	&& [ "$forced" != "true" ] \
+	&& [ "$action" != "last" ] \
+	&& [ "$action" != "current" ] \
+	&& [ "$action" != "next" ] \
+	&& [ "$action" != "backlog" ]; then
+	usage "$0" "$action"
+	exit 0
+fi
+
+mkdir -p "$directory" # we don't create it until we need it
 
 primaryTemplateHash="$(createFileFromTemplate "$primary")"
 secondaryTemplateHash="$(createFileFromTemplate "$secondary")"
