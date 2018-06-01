@@ -49,13 +49,14 @@ fi
 
 # load config values
 directory="$(loadConfigValueEvaluated "directory" "$XDG_DATA_HOME/taskfocus" "$sysconfig" "$userconfig")"
+format="$(loadConfigValueEvaluated "name-format" "%Y-%m-%d" "$sysconfig" "$userconfig")"
+cycle="$(loadConfigValueEvaluated "cycle-duration" "$((60*60*24))" "$sysconfig" "$userconfig")"
 
 mkdir -p "$directory"
 
 # other variables
-timestamp="$(date +%s)"
-cycle="$((60*60*24))"
-format="%Y-%m-%d"
+now=$(date +%s)
+timestamp="$(($now / $cycle * $cycle))"
 last="$(date +$format -d @$(($timestamp + ($cycle*-1)))).md"
 current="$(date +$format -d @$(($timestamp + ($cycle*0)))).md"
 next="$(date +$format -d @$(($timestamp + ($cycle*1)))).md"
