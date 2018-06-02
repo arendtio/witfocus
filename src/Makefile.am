@@ -2,7 +2,9 @@ templatesdir = $(pkgdatadir)/templates
 scriptsdir = $(pkgdatadir)/scripts
 
 dist_templates_DATA = \
+	newFile.md \
 	task.md \
+	fullTask.md \
 	vimrc
 
 dist_scripts_DATA = \

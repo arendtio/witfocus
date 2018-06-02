@@ -1,1 +1,2 @@
 nnoremap ,task :-1read @datadir@/templates/task.md<CR>A
+nnoremap ,fulltask :-1read @datadir@/templates/fullTask.md<CR>A

@@ -2,3 +2,5 @@
 	- Exit Condition: 
 	- Time: 
 	- Result: 
+	- Notes: 
+	- Learnings: 

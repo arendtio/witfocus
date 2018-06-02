@@ -35,6 +35,9 @@ fi
 
 # load config values
 directory="$(loadConfigValueEvaluated "directory" "$XDG_DATA_HOME/taskfocus" "$sysconfig" "$userconfig")"
+newFileTemplate="$(loadConfigValueEvaluated "new-file-template" "$pkgdatadir/templates/newFile.md" "$sysconfig" "$userconfig")"
+taskTemplate="$(loadConfigValueEvaluated "task-template" "$pkgdatadir/templates/task.md" "$sysconfig" "$userconfig")"
+fullTaskTemplate="$(loadConfigValueEvaluated "full-task-template" "$pkgdatadir/templates/fullTask.md" "$sysconfig" "$userconfig")"
 format="$(loadConfigValue "name-format" "%Y-%m-%d" "$sysconfig" "$userconfig")"
 cycle="$(loadConfigValue "cycle-duration" "$((60*60*24))" "$sysconfig" "$userconfig")"
 secondaryName="$(loadConfigValue "default-secondary-file" "current" "$sysconfig" "$userconfig")"
@@ -73,8 +76,11 @@ fi
 
 mkdir -p "$directory" # we don't create it until we need it
 
-primaryTemplateHash="$(createFileFromTemplate "$primary")"
-secondaryTemplateHash="$(createFileFromTemplate "$secondary")"
+primaryCycle="$(basename "$primary" | sed 's/\.[^.]\+$//g')"
+secondaryCycle="$(basename "$secondary" | sed 's/\.[^.]\+$//g')"
+instructions="type ',task' to add more tasks"
+primaryTemplateHash="$(createFileFromTemplate "$primary" "$primaryCycle" "$instructions" "$newFileTemplate" "$taskTemplate" "$fullTaskTemplate")"
+secondaryTemplateHash="$(createFileFromTemplate "$secondary" "$secondaryCycle" "$instructions" "$newFileTemplate" "$taskTemplate" "$fullTaskTemplate")"
 
 if [ "$primary" == "$secondary" ]; then
 	vim "$primary"

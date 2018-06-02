@@ -1,4 +1,4 @@
-#!/usr/bin/env sh
+#!/usr/bin/env bash
 
 function usage {
 	local cmd="$1"
@@ -105,15 +105,27 @@ function nameToFilename {
 }
 
 # create file from template if it doesn't exist
+# echos hash of new file, if new file is created
 # echos nothing if the file exists (important for removeUnused)
 function createFileFromTemplate {
 	local filePath="$1"
+	local cycle="$2"
+	local instructions="$3"
+	local newFileTemplate="$4"
+	local taskTemplate="$5"
+	local fullTaskTemplate="$6"
+
 	# dont overwrite existing files
 	if ! [ -f "$filePath" ]; then
-		touch "$filePath"
-		echo "# Tasks" >> "$filePath"
-		cat "$template" >> "$filePath"
-		echo "type ',task' to add more tasks" >> "$filePath"
+		# replace placeholders
+		# FIXME: Process substitution (<()) is not POSIX compatible
+		local out="$(cat "$newFileTemplate")"
+		out="$(awk 'NR==FNR{rep=(NR>1?rep RS:"") $0; next} {gsub(/{TASK}/,rep)}1' "$taskTemplate" <(echo "$out"))"
+		out="$(awk 'NR==FNR{rep=(NR>1?rep RS:"") $0; next} {gsub(/{FULLTASK}/,rep)}1' "$fullTaskTemplate" <(echo "$out"))"
+		echo "$out" | sed \
+			-e "s/{CYCLE}/$cycle/g" \
+			-e "s/{INSTRUCTIONS}/$instructions/g" \
+			>> "$filePath"
 		fileHash "$filePath"
 	fi
 }

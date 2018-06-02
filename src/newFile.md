@@ -1,0 +1,6 @@
+# Tasks {CYCLE}
+{TASK}
+{TASK}
+{FULLTASK}
+
+{INSTRUCTIONS}
