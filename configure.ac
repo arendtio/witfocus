@@ -1,4 +1,4 @@
-AC_INIT([witfocus], [0.9.4], [bugs-witfocus@ubermail.me])
+AC_INIT([witfocus], [0.9.5], [bugs-witfocus@ubermail.me])
 AM_INIT_AUTOMAKE([-Wall -Werror foreign])
 
 AC_CONFIG_FILES([
