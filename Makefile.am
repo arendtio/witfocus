@@ -1,4 +1,4 @@
 SUBDIRS = src
-bin_SCRIPTS = taskfocus
+bin_SCRIPTS = witfocus
 dist_doc_DATA = README.md
-sysconf_DATA = taskfocus.conf
+sysconf_DATA = witfocus.conf

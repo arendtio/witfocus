@@ -27,9 +27,9 @@ function setup {
 	local userconfig="$3"
 
 	# load system default
-	local directory="$(loadConfigValueEvaluated "directory" "$XDG_DATA_HOME/taskfocus" "$sysconfig" "$userconfig")"
+	local directory="$(loadConfigValueEvaluated "directory" "$XDG_DATA_HOME/witfocus" "$sysconfig" "$userconfig")"
 
-	echo "It looks like you are running taskfocus for the first time. Starting setup:"
+	echo "It looks like you are running witfocus for the first time. Starting setup:"
 	read -e -p "Please enter where to store your task files: " -i "$directory" directory;
 	echo "directory: $directory" > "$userconfig"
 	echo "vimrc snippet:"

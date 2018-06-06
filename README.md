@@ -1,4 +1,4 @@
-# TaskFocus
+# WitFocus
 CLI tool for simple task management
 
 # Installation

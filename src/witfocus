@@ -34,7 +34,7 @@ if ! [ -f "$userconfig" ]; then
 fi
 
 # load config values
-directory="$(loadConfigValueEvaluated "directory" "$XDG_DATA_HOME/taskfocus" "$sysconfig" "$userconfig")"
+directory="$(loadConfigValueEvaluated "directory" "$XDG_DATA_HOME/witfocus" "$sysconfig" "$userconfig")"
 newFileTemplate="$(loadConfigValueEvaluated "new-file-template" "$pkgdatadir/templates/newFile.md" "$sysconfig" "$userconfig")"
 taskTemplate="$(loadConfigValueEvaluated "task-template" "$pkgdatadir/templates/task.md" "$sysconfig" "$userconfig")"
 fullTaskTemplate="$(loadConfigValueEvaluated "full-task-template" "$pkgdatadir/templates/fullTask.md" "$sysconfig" "$userconfig")"
