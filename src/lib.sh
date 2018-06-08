@@ -83,25 +83,71 @@ function fileHash {
 	sha1sum "$filePath" | cut -d" " -f1
 }
 
+function cycleCalculator {
+	local i=0
+	local timestamp="$1"
+	local cycleSize="$2"
+	local factor="$3"
+	local blacklist="$4"
+	local blacklistFormat="$5"
+	local target="$(date +%s -d @$(($timestamp + ($cycleSize*$factor) )) )"
+
+	# check the blacklist
+	for i in {0..1000}; do # max 1000 cycles
+		if [ $(listContains "$blacklist" "$(date +$blacklistFormat -d @$target)") == "true" ]; then
+			if [ $factor -lt 0 ]; then
+				target="$(($target-$cycleSize))"
+			else
+				target="$(($target+$cycleSize))"
+			fi
+		else
+			break
+		fi
+		if [ "$i" == "1000" ]; then
+			echo "Blacklist exhausted, you probably want to reconfigure it." > /dev/stderr
+			sleep 10
+		fi
+	done
+
+	echo "$target"
+}
+
+function listContains {
+	list="$1"
+	needle="$2"
+	for x in $list; do
+		if [ "$needle" == "$x" ]; then
+			echo "true"
+			return
+		fi
+	done
+	echo "false"
+}
+
 function nameToFilename {
 	local name="$1"
 	local now="$2"
 	local forced="$3"
+	local blacklist="$4"
+	local blacklistFormat="$5"
 
-	local timestamp="$(($now / $cycle * $cycle))"
-	local last="$(date +$format -d @$(($timestamp + ($cycle*-1)))).md"
-	local current="$(date +$format -d @$(($timestamp + ($cycle*0)))).md"
-	local next="$(date +$format -d @$(($timestamp + ($cycle*1)))).md"
+	local target="$name"
+	local timestamp="$(($now / $cycle * $cycle))" # round to cycle multiple
 
-	if [ "$1" == "last" ]; then
-		echo "$last"
-	elif [ "$1" == "current" ]; then
-		echo "$current"
-	elif [ "$1" == "next" ]; then
-		echo "$next"
-	else
-		echo "$1.md"
+	if [ "$name" == "last" ] || [ "$name" == "current" ] || [ "$name" == "next" ]; then
+		local factor=0
+		if [ "$name" == "last" ]; then
+			factor=-1
+		elif [ "$name" == "next" ]; then
+			factor=1
+		fi
+
+		# use the blacklist for the calculation
+		local targetDate="$(cycleCalculator "$timestamp" "$cycle" "$factor" "$blacklist" "$blacklistFormat")"
+		local target="$(date +$format -d @$targetDate)"
 	fi
+
+	echo "$target.md"
 }
 
 # create file from template if it doesn't exist

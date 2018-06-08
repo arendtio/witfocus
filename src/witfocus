@@ -40,6 +40,8 @@ taskTemplate="$(loadConfigValueEvaluated "task-template" "$pkgdatadir/templates/
 fullTaskTemplate="$(loadConfigValueEvaluated "full-task-template" "$pkgdatadir/templates/fullTask.md" "$sysconfig" "$userconfig")"
 format="$(loadConfigValue "name-format" "%Y-%m-%d" "$sysconfig" "$userconfig")"
 cycle="$(loadConfigValue "cycle-duration" "$((60*60*24))" "$sysconfig" "$userconfig")"
+cycleBlacklist="$(loadConfigValue "cycle-blacklist" "" "$sysconfig" "$userconfig")"
+cycleBlacklistFormat="$(loadConfigValue "cycle-blacklist-format" "%w" "$sysconfig" "$userconfig")"
 secondaryName="$(loadConfigValue "default-secondary-file" "current" "$sysconfig" "$userconfig")"
 action="$(loadConfigValue "default-action" "current" "$sysconfig" "$userconfig")"
 
@@ -55,8 +57,8 @@ fi
 # other variables
 template="$pkgdatadir/templates/task.md"
 now=$(date +%s)
-primary="$directory/$(nameToFilename "$action" "$now" "$forced")"
-secondary="$directory/$(nameToFilename "$secondaryName" "$now" "$forced")"
+primary="$directory/$(nameToFilename "$action" "$now" "$forced" "$cycleBlacklist" "$cycleBlacklistFormat")"
+secondary="$directory/$(nameToFilename "$secondaryName" "$now" "$forced" "$cycleBlacklist" "$cycleBlacklistFormat")"
 
 if [ "$action" == "open" ]; then
 	# sort only by the first column (seperated by space)
