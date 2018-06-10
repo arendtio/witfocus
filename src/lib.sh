@@ -132,7 +132,10 @@ function nameToFilename {
 	local blacklistFormat="$5"
 
 	local target="$name"
-	local timestamp="$(($now / $cycle * $cycle))" # round to cycle multiple
+	# NOTE: using a multiple of the cycle as timestamp causes problems with
+	# timezones as the result is the start of the cycle in UTC and not the
+	# local time, therefore it was removed again
+	local timestamp="$now"
 
 	if [ "$name" == "last" ] || [ "$name" == "current" ] || [ "$name" == "next" ]; then
 		local factor=0
