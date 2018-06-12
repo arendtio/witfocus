@@ -41,7 +41,7 @@ fullTaskTemplate="$(loadConfigValueEvaluated "full-task-template" "$pkgdatadir/t
 format="$(loadConfigValue "name-format" "%Y-%m-%d" "$sysconfig" "$userconfig")"
 cycle="$(loadConfigValue "cycle-duration" "$((60*60*24))" "$sysconfig" "$userconfig")"
 cycleBlacklist="$(loadConfigValue "cycle-blacklist" "" "$sysconfig" "$userconfig")"
-cycleBlacklistFormat="$(loadConfigValue "cycle-blacklist-format" "%w" "$sysconfig" "$userconfig")"
+cycleBlacklistFormat="$(loadConfigValue "cycle-blacklist-format" "" "$sysconfig" "$userconfig")"
 secondaryName="$(loadConfigValue "default-secondary-file" "current" "$sysconfig" "$userconfig")"
 action="$(loadConfigValue "default-action" "current" "$sysconfig" "$userconfig")"
 

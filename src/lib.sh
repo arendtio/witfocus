@@ -94,7 +94,8 @@ function cycleCalculator {
 
 	# check the blacklist
 	for i in {0..1000}; do # max 1000 cycles
-		if [ $(listContains "$blacklist" "$(date +$blacklistFormat -d @$target)") == "true" ]; then
+		if [ "$blacklist" != "" ] && [ "$blacklistFormat" != "" ] && \
+			[ $(listContains "$blacklist" "$(date +$blacklistFormat -d @$target)") == "true" ]; then
 			if [ $factor -lt 0 ]; then
 				target="$(($target-$cycleSize))"
 			else
