@@ -63,7 +63,7 @@ secondary="$directory/$(nameToFilename "$secondaryName" "$now" "$forced" "$cycle
 if [ "$action" == "open" ]; then
 	# sort only by the first column (seperated by space)
 	if [ -d "$directory" ]; then
-		grep -ri "\- \[ \]" "$directory" | sed -e 's;^[^:]*/;;' -e 's/.md:-/:/' | sort -s -k 1,1
+		grep -ri -e "^\- \[ \]" "$directory" | sed -e 's;^[^:]*/;;' -e 's/.md:-/:/' | sort -s -k 1,1
 	fi
 	exit 0
 elif ! [ -f "$primary" ] \
