@@ -39,6 +39,7 @@ newFileTemplate="$(loadConfigValueEvaluated "new-file-template" "$pkgdatadir/tem
 taskTemplate="$(loadConfigValueEvaluated "task-template" "$pkgdatadir/templates/task.md" "$sysconfig" "$userconfig")"
 fullTaskTemplate="$(loadConfigValueEvaluated "full-task-template" "$pkgdatadir/templates/fullTask.md" "$sysconfig" "$userconfig")"
 format="$(loadConfigValue "name-format" "%Y-%m-%d" "$sysconfig" "$userconfig")"
+formatMatchRegex="$(loadConfigValue "name-match-regex" "[0-9]{4}-[0-9]{2}-[0-9]{2}" "$sysconfig" "$userconfig")"
 cycle="$(loadConfigValue "cycle-duration" "$((60*60*24))" "$sysconfig" "$userconfig")"
 cycleBlacklist="$(loadConfigValue "cycle-blacklist" "" "$sysconfig" "$userconfig")"
 cycleBlacklistFormat="$(loadConfigValue "cycle-blacklist-format" "" "$sysconfig" "$userconfig")"
@@ -63,7 +64,7 @@ secondary="$directory/$(nameToFilename "$secondaryName" "$now" "$forced" "$cycle
 if [ "$action" == "open" ]; then
 	# sort only by the first column (seperated by space)
 	if [ -d "$directory" ]; then
-		grep -ri -e "^\- \[ \]" "$directory" | sed -e 's;^[^:]*/;;' -e 's/.md:-/:/' | sort -s -k 1,1
+		openAction "$directory" "$formatMatchRegex"
 	fi
 	exit 0
 elif ! [ -f "$primary" ] \

@@ -204,3 +204,38 @@ function removeUnused {
 	fi
 }
 
+function openAction {
+	local directory="$1"
+	local matchRegex="$2"
+
+	nonFutureContent "$directory" "$matchRegex" | sed -e 's;^[^:]*/;;' -e 's/.md:-/:/' | sort -s -k 1,1
+}
+
+function nonFutureContent {
+	local directory="$1"
+	local matchRegex="$2"
+	local filenamePart
+
+	for f in "$directory"/*.md; do
+		# echo "checking $f" >/dev/stderr
+		if [ -f "$f" ]; then
+			# echo "$f is a regular file" >/dev/stderr
+			filenamePart="$(basename "$f" | sed "s/\.md$//")"
+			matchCount="$(echo "$filenamePart" | grep -cP "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" || true)"
+			if [ "$matchCount" == "1" ]; then
+				# echo "$f is a file with a date format name" >/dev/stderr
+				if date -d "$filenamePart">/dev/null 2>&1; then
+					# echo "$filenamePart is actually a valid date" >/dev/stderr
+					local timestamp="$(date -d "$filenamePart" +%s)"
+					local now="$(date +%s)"
+					if [ "$timestamp" -gt "$now" ]; then
+						# echo "$f is a file with a future date, skip it" >/dev/stderr
+						continue
+					fi
+				fi
+			fi
+			# we use grep here instead of cat as we require the filename at the beginning of each line
+			grep -Hri "\- \[ \]" "$f" || true
+		fi
+	done
+}
