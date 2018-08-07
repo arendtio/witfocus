@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 #--------------------------------------------
 # Default Bash Script Header
-set -eu
-trap stacktrace EXIT
+set -Eeuo pipefail
+trap stacktrace EXIT ERR
 function stacktrace {
 	if [ $? != 0 ]; then
 		echo -e "\nThe command '$BASH_COMMAND' triggerd a stacktrace:"

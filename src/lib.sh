@@ -48,12 +48,26 @@ function colonValue {
 	local file=$2
 
 	if ! [ -f "$file" ]; then
-		return
+		return 1
 	fi
 
 	grep -e "^$field:" "$file" \
 		| cut -d':' -f2- \
 		| sed 's/\(^[[:space:]]\+\|[[:space:]]\+$\)//g'
+}
+
+function colonValueExists {
+	local field=$1
+	local file=$2
+
+	if ! [ -f "$file" ]; then
+		return 1
+	fi
+
+	if grep -e "^$field:" "$file" >/dev/null; then
+		return 0
+	fi
+	return 1
 }
 
 function loadConfigValue {
@@ -63,14 +77,13 @@ function loadConfigValue {
 	local userConfig="$4"
 
 	# read from userconfig
-	local value="$(colonValue "$field" "$userConfig")"
-	if [ "$value" == "" ]; then
-		value="$(colonValue "$field" "$systemConfig")"
+	if colonValueExists "$field" "$userConfig"; then
+		colonValue "$field" "$userConfig"
+	elif colonValueExists "$field" "$systemConfig"; then
+		colonValue "$field" "$systemConfig"
+	else
+		echo "$defaultValue"
 	fi
-	if [ "$value" == "" ]; then
-		value="$defaultValue"
-	fi
-	echo "$value"
 }
 
 function loadConfigValueEvaluated {
