@@ -7,6 +7,8 @@ function usage {
 	echo -e "Task File '$action' does not exist.\n"
 	echo -e "Usage: $cmd [operation] [options]"
 	echo -e "Operations:"
+	echo -e "\topen\tLists tasks which are undone and due"
+	echo -e ""
 	echo -e "\tbacklog\topens the backlog"
 	echo -e "\tlast\topens the file for the last cycle (e.g. yesterday)"
 	echo -e "\tcurrent\topens the file for the current cycle (e.g. today)"
@@ -17,6 +19,7 @@ function usage {
 	echo -e ""
 	echo -e "Options:"
 	echo -e "\t-f\t to create non-existing files which are not part of the predefined operations (e.g. for future dates)"
+	echo -e "\t-a\t can be used with the 'open' operation to show all tasks (e.g. future tasks too)"
 	echo -e ""
 	echo -e "For all operations which are not the 'current' one, the 'current' operation will be displayed next to it."
 }
@@ -213,6 +216,7 @@ function openAction {
 
 function nonFutureContent {
 	local directory="$1"
+	# if the date check should be skipped the regex is empty
 	local matchRegex="$2"
 	local filenamePart
 
@@ -221,7 +225,7 @@ function nonFutureContent {
 		if [ -f "$f" ]; then
 			# echo "$f is a regular file" >/dev/stderr
 			filenamePart="$(basename "$f" | sed "s/\.md$//")"
-			matchCount="$(echo "$filenamePart" | grep -cP "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" || true)"
+			matchCount="$(echo "$filenamePart" | grep -cP "^$matchRegex$" || true)"
 			if [ "$matchCount" == "1" ]; then
 				# echo "$f is a file with a date format name" >/dev/stderr
 				if date -d "$filenamePart">/dev/null 2>&1; then

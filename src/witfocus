@@ -51,8 +51,13 @@ if [ $# -gt 0 ]; then
 	action="$1"
 fi
 forced="false"
-if [ $# -gt 1 ] && [ "${2:-}" == "-f" ]; then
-	forced="true"
+allOpen="false"
+if [ $# -gt 1 ]; then
+	if [ "${2:-}" == "-f" ]; then
+		forced="true"
+	elif [ "${2:-}" == "-a" ]; then
+		allOpen="true"
+	fi
 fi
 
 # other variables
@@ -64,6 +69,10 @@ secondary="$directory/$(nameToFilename "$secondaryName" "$now" "$forced" "$cycle
 if [ "$action" == "open" ]; then
 	# sort only by the first column (seperated by space)
 	if [ -d "$directory" ]; then
+		if [ "$allOpen" == "true" ]; then
+			# echo "Skipping date check" >/dev/stderr
+			formatMatchRegex=""
+		fi
 		openAction "$directory" "$formatMatchRegex"
 	fi
 	exit 0
